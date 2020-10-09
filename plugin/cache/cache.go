@@ -65,31 +65,21 @@ func New() *Cache {
 // key returns key under which we store the item, -1 will be returned if we don't store the message.
 // Currently we do not cache Truncated, errors zone transfers or dynamic update messages.
 // qname holds the already lowercased qname.
-func key(qname string, m *dns.Msg, t response.Type, do bool) (bool, uint64) {
+func key(qname string, m *dns.Msg, t response.Type) (bool, uint64) {
 	// We don't store truncated responses.
 	if m.Truncated {
 		return false, 0
 	}
-	// Nor errors or Meta or Update
+	// Nor errors or Meta or Update.
 	if t == response.OtherError || t == response.Meta || t == response.Update {
 		return false, 0
 	}
 
-	return true, hash(qname, m.Question[0].Qtype, do)
+	return true, hash(qname, m.Question[0].Qtype)
 }
 
-var one = []byte("1")
-var zero = []byte("0")
-
-func hash(qname string, qtype uint16, do bool) uint64 {
+func hash(qname string, qtype uint16) uint64 {
 	h := fnv.New64()
-
-	if do {
-		h.Write(one)
-	} else {
-		h.Write(zero)
-	}
-
 	h.Write([]byte{byte(qtype >> 8)})
 	h.Write([]byte{byte(qtype)})
 	h.Write([]byte(qname))
@@ -152,16 +142,15 @@ func (w *ResponseWriter) RemoteAddr() net.Addr {
 
 // WriteMsg implements the dns.ResponseWriter interface.
 func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
-	do := false
-	mt, opt := response.Typify(res, w.now().UTC())
-	if opt != nil {
-		do = opt.Do()
-	}
+	// res needs to be copied otherwise we will be modifying the underlaying arrays which are now cached.
+	resc := res.Copy()
+
+	mt, _ := response.Typify(resc, w.now().UTC())
 
 	// key returns empty string for anything we don't want to cache.
-	hasKey, key := key(w.state.Name(), res, mt, do)
+	hasKey, key := key(w.state.Name(), resc, mt)
 
-	msgTTL := dnsutil.MinimalTTL(res, mt)
+	msgTTL := dnsutil.MinimalTTL(resc, mt)
 	var duration time.Duration
 	if mt == response.NameError || mt == response.NoData {
 		duration = computeTTL(msgTTL, w.minnttl, w.nttl)
@@ -173,8 +162,8 @@ func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
 	}
 
 	if hasKey && duration > 0 {
-		if w.state.Match(res) {
-			w.set(res, key, mt, duration)
+		if w.state.Match(resc) {
+			w.set(resc, key, mt, duration)
 			cacheSize.WithLabelValues(w.server, Success).Set(float64(w.pcache.Len()))
 			cacheSize.WithLabelValues(w.server, Denial).Set(float64(w.ncache.Len()))
 		} else {
@@ -187,20 +176,15 @@ func (w *ResponseWriter) WriteMsg(res *dns.Msg) error {
 		return nil
 	}
 
+	do := w.state.Do()
 	// Apply capped TTL to this reply to avoid jarring TTL experience 1799 -> 8 (e.g.)
+	// We also may need to filter out DNSSEC records, see toMsg() for similar code.
 	ttl := uint32(duration.Seconds())
-	for i := range res.Answer {
-		res.Answer[i].Header().Ttl = ttl
-	}
-	for i := range res.Ns {
-		res.Ns[i].Header().Ttl = ttl
-	}
-	for i := range res.Extra {
-		if res.Extra[i].Header().Rrtype != dns.TypeOPT {
-			res.Extra[i].Header().Ttl = ttl
-		}
-	}
-	return w.ResponseWriter.WriteMsg(res)
+	resc.Answer = filterRRSlice(resc.Answer, ttl, do, false)
+	resc.Ns = filterRRSlice(resc.Ns, ttl, do, false)
+	resc.Extra = filterRRSlice(resc.Extra, ttl, do, false)
+
+	return w.ResponseWriter.WriteMsg(resc)
 }
 
 func (w *ResponseWriter) set(m *dns.Msg, key uint64, mt response.Type, duration time.Duration) {

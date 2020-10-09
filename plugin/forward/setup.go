@@ -1,19 +1,18 @@
 package forward
 
 import (
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"strconv"
 	"time"
 
+	"github.com/coredns/caddy"
 	"github.com/coredns/coredns/core/dnsserver"
 	"github.com/coredns/coredns/plugin"
-	"github.com/coredns/coredns/plugin/metrics"
 	"github.com/coredns/coredns/plugin/pkg/parse"
 	pkgtls "github.com/coredns/coredns/plugin/pkg/tls"
 	"github.com/coredns/coredns/plugin/pkg/transport"
-
-	"github.com/caddyserver/caddy"
 )
 
 func init() { plugin.Register("forward", setup) }
@@ -33,7 +32,6 @@ func setup(c *caddy.Controller) error {
 	})
 
 	c.OnStartup(func() error {
-		metrics.MustRegister(c, RequestCount, RcodeCount, RequestDuration, HealthcheckFailureCount, SocketGauge, MaxConcurrentRejectCount)
 		return f.OnStartup()
 	})
 
@@ -119,6 +117,11 @@ func parseStanza(c *caddy.Controller) (*Forward, error) {
 	if f.tlsServerName != "" {
 		f.tlsConfig.ServerName = f.tlsServerName
 	}
+
+	// Initialize ClientSessionCache in tls.Config. This may speed up a TLS handshake
+	// in upcoming connections to the same TLS server.
+	f.tlsConfig.ClientSessionCache = tls.NewLRUClientSessionCache(len(f.proxies))
+
 	for i := range f.proxies {
 		// Only set this for proxies that need it.
 		if transports[i] == transport.TLS {
