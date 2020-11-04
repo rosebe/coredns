@@ -10,18 +10,11 @@ import (
 	"github.com/coredns/coredns/plugin/pkg/parse"
 )
 
-func init() { plugin.Register("dnstap", wrapSetup) }
-
-func wrapSetup(c *caddy.Controller) error {
-	if err := setup(c); err != nil {
-		return plugin.Error("dnstap", err)
-	}
-	return nil
-}
+func init() { plugin.Register("dnstap", setup) }
 
 type config struct {
+	proto  string
 	target string
-	socket bool
 	full   bool
 }
 
@@ -39,10 +32,10 @@ func parseConfig(d *caddy.Controller) (c config, err error) {
 			return c, d.ArgErr()
 		}
 		c.target = servers[0]
+		c.proto = "tcp"
 	} else {
-		// default to UNIX socket
 		c.target = strings.TrimPrefix(c.target, "unix://")
-		c.socket = true
+		c.proto = "unix"
 	}
 
 	c.full = d.NextArg() && d.Val() == "full"
@@ -53,11 +46,11 @@ func parseConfig(d *caddy.Controller) (c config, err error) {
 func setup(c *caddy.Controller) error {
 	conf, err := parseConfig(c)
 	if err != nil {
-		return err
+		return plugin.Error("dnstap", err)
 	}
 
-	dio := dnstapio.New(conf.target, conf.socket)
-	dnstap := Dnstap{IO: dio, JoinRawMessage: conf.full}
+	dio := dnstapio.New(conf.proto, conf.target)
+	dnstap := Dnstap{io: dio, IncludeRawMessage: conf.full}
 
 	c.OnStartup(func() error {
 		dio.Connect()
