@@ -27,14 +27,12 @@ require (
 	github.com/prometheus/client_golang v1.10.0
 	github.com/prometheus/client_model v0.2.0
 	github.com/prometheus/common v0.24.0
-	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
-	go.uber.org/multierr v1.6.0 // indirect
+	go.etcd.io/etcd/api/v3 v3.5.0-rc.0
+	go.etcd.io/etcd/client/v3 v3.5.0-rc.0
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
-	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57
+	golang.org/x/sys v0.0.0-20210510120138-977fb7262007
 	google.golang.org/api v0.29.0
-	google.golang.org/grpc v1.37.1
+	google.golang.org/grpc v1.38.0
 	gopkg.in/DataDog/dd-trace-go.v1 v1.28.0
 	k8s.io/api v0.21.0
 	k8s.io/apimachinery v0.21.0
