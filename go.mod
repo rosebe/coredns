@@ -4,12 +4,12 @@ go 1.16
 
 require (
 	github.com/Azure/azure-sdk-for-go v53.3.0+incompatible
-	github.com/Azure/go-autorest/autorest v0.11.18
+	github.com/Azure/go-autorest/autorest v0.11.19
 	github.com/Azure/go-autorest/autorest/azure/auth v0.5.7
 	github.com/Azure/go-autorest/autorest/to v0.2.0 // indirect
-	github.com/DataDog/datadog-go v3.5.0+incompatible // indirect
+	github.com/Microsoft/go-winio v0.5.0 // indirect
 	github.com/apparentlymart/go-cidr v1.1.0
-	github.com/aws/aws-sdk-go v1.38.40
+	github.com/aws/aws-sdk-go v1.38.64
 	github.com/coredns/caddy v1.1.0
 	github.com/dnstap/golang-dnstap v0.4.0
 	github.com/farsightsec/golang-framestream v0.3.0
@@ -24,22 +24,18 @@ require (
 	github.com/openzipkin-contrib/zipkin-go-opentracing v0.4.5
 	github.com/openzipkin/zipkin-go v0.2.2
 	github.com/philhofer/fwd v1.1.1 // indirect
-	github.com/prometheus/client_golang v1.10.0
+	github.com/prometheus/client_golang v1.11.0
 	github.com/prometheus/client_model v0.2.0
-	github.com/prometheus/common v0.24.0
-	go.etcd.io/etcd/api/v3 v3.5.0-alpha.0
-	go.etcd.io/etcd/client/v3 v3.5.0-alpha.0
-	go.uber.org/multierr v1.6.0 // indirect
+	github.com/prometheus/common v0.29.0
+	go.etcd.io/etcd/api/v3 v3.5.0-rc.1
+	go.etcd.io/etcd/client/v3 v3.5.0-rc.1
 	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
-	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57
-	google.golang.org/api v0.29.0
-	google.golang.org/grpc v1.37.1
-	gopkg.in/DataDog/dd-trace-go.v1 v1.28.0
-	k8s.io/api v0.21.0
-	k8s.io/apimachinery v0.21.0
-	k8s.io/client-go v0.21.0
+	golang.org/x/sys v0.0.0-20210603125802-9665404d3644
+	google.golang.org/api v0.48.0
+	google.golang.org/grpc v1.38.0
+	gopkg.in/DataDog/dd-trace-go.v1 v1.31.1
+	k8s.io/api v0.21.1
+	k8s.io/apimachinery v0.21.1
+	k8s.io/client-go v0.21.1
 	k8s.io/klog v1.0.0
 )
-
-replace github.com/coreos/bbolt => go.etcd.io/bbolt v1.3.4
