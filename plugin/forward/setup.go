@@ -92,7 +92,13 @@ func parseStanza(c *caddy.Controller) (*Forward, error) {
 	if !c.Args(&f.from) {
 		return f, c.ArgErr()
 	}
-	f.from = plugin.Host(f.from).Normalize()[0] // there can only be one here, won't work with non-octet reverse
+	origFrom := f.from
+	zones := plugin.Host(f.from).NormalizeExact()
+	f.from = zones[0] // there can only be one here, won't work with non-octet reverse
+
+	if len(zones) > 1 {
+		log.Warningf("Unsupported CIDR notation: '%s' expands to multiple zones. Using only '%s'.", origFrom, f.from)
+	}
 
 	to := c.RemainingArgs()
 	if len(to) == 0 {
@@ -151,7 +157,7 @@ func parseBlock(c *caddy.Controller, f *Forward) error {
 			return c.ArgErr()
 		}
 		for i := 0; i < len(ignore); i++ {
-			f.ignored = append(f.ignored, plugin.Host(ignore[i]).Normalize()...)
+			f.ignored = append(f.ignored, plugin.Host(ignore[i]).NormalizeExact()...)
 		}
 	case "max_fails":
 		if !c.NextArg() {
