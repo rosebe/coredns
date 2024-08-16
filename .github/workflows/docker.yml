@@ -25,5 +25,10 @@ jobs:
         run: make VERSION=${RELEASE:1} DOCKER=coredns -f Makefile.docker release
       - name: Show Docker Images
         run: docker images
+      - name: Docker login
+        uses: docker/login-action@0d4c9c5ea7693da7b068278f7b52bda2a190a446  # v3.2.0
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_PASSWORD }}
       - name: Publish Docker Images
         run: make VERSION=${RELEASE:1} DOCKER=coredns -f Makefile.docker docker-push
