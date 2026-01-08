@@ -92,7 +92,7 @@ Transfer:
 	if z.SOA == nil {
 		return true, Err
 	}
-	return less(z.SOA.Serial, uint32(serial)), Err
+	return less(z.SOA.Serial, uint32(serial)), Err // #nosec G115 -- serial fits in uint32 per DNS RFC
 }
 
 // less returns true of a is smaller than b when taking RFC 1982 serial arithmetic into account.
@@ -195,7 +195,7 @@ Restart:
 
 // jitter returns a random duration between [0,n) * time.Millisecond
 func jitter(n int) time.Duration {
-	r := rand.Intn(n)
+	r := rand.Intn(n) // #nosec G404 -- non-cryptographic jitter to spread transfer attempts.
 	return time.Duration(r) * time.Millisecond
 }
 
