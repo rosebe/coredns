@@ -118,6 +118,10 @@ func (z *Zone) Insert(r dns.RR) error {
 		r.(*dns.MX).Mx = strings.ToLower(r.(*dns.MX).Mx)
 	case dns.TypeSRV:
 		// r.(*dns.SRV).Target = strings.ToLower(r.(*dns.SRV).Target)
+	case dns.TypeSVCB:
+		r.(*dns.SVCB).Target = strings.ToLower(r.(*dns.SVCB).Target)
+	case dns.TypeHTTPS:
+		r.(*dns.HTTPS).Target = strings.ToLower(r.(*dns.HTTPS).Target)
 	}
 
 	z.Tree.Insert(r)
@@ -171,20 +175,19 @@ func (z *Zone) nameFromRight(qname string, i int) (string, bool) {
 
 	n := len(qname)
 	for j := 1; j <= z.origLen; j++ {
-		if m, shot := dns.PrevLabel(qname[:n], 1); shot {
+		m, shot := dns.PrevLabel(qname[:n], 1)
+		if shot {
 			return qname, shot
-		} else {
-			n = m
 		}
+		n = m
 	}
 
 	for j := 1; j <= i; j++ {
 		m, shot := dns.PrevLabel(qname[:n], 1)
 		if shot {
 			return qname, shot
-		} else {
-			n = m
 		}
+		n = m
 	}
 	return qname[n:], false
 }
