@@ -127,6 +127,11 @@ type Config struct {
 	WriteTimeout time.Duration
 	IdleTimeout  time.Duration
 
+	// MaxTCPQueries defines the maximum number of queries served on a single TCP/TLS
+	// connection before it is closed. -1 means unlimited. This is nil if not specified,
+	// allowing for a default to be used.
+	MaxTCPQueries *int
+
 	// TSIG secrets, [name]key.
 	TsigSecret map[string]string
 
@@ -170,4 +175,23 @@ func GetConfig(c *caddy.Controller) *Config {
 	// the configs.
 	ctx.saveConfig(key, &Config{ListenHosts: []string{""}})
 	return GetConfig(c)
+}
+
+// AddPluginToAllServerBlocks adds m once to every server block in c's
+// instance. It is intended for directives that must handle traffic on a
+// listener other than the one where the directive is configured.
+func AddPluginToAllServerBlocks(c *caddy.Controller, m plugin.Plugin) {
+	ctx := c.Context().(*dnsContext)
+	seen := make(map[*Config]struct{})
+	for _, cfg := range ctx.configs {
+		first := cfg.firstConfigInBlock
+		if first == nil {
+			first = cfg
+		}
+		if _, ok := seen[first]; ok {
+			continue
+		}
+		seen[first] = struct{}{}
+		first.AddPlugin(m)
+	}
 }
